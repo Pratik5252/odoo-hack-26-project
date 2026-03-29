@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Card } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
@@ -9,10 +9,12 @@ import { login } from "../services/authService";
 import { useAuthForm } from "../hooks/useAuthForm";
 
 export function LoginPage() {
-  const { formState, updateField } = useAuthForm({ name: "", email: "", password: "", confirmPassword: "", country: "" });
-  const [errors, setErrors] = useState<{ email?: string; password?: string; global?: string }>({});
+  const { formState, updateField } = useAuthForm({ name: "", email: "", password: "", confirmPassword: "", country: "", baseCurrency: "", currencySymbol: "" });
+  const [errors, setErrors] = useState<{ email?: string; password?: string; global?: string; info?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const infoMessage = (location.state as { message?: string } | null)?.message;
 
   const validate = () => {
     const nextErrors: typeof errors = {};
@@ -34,8 +36,17 @@ export function LoginPage() {
 
     try {
       const resp = await login({ email: formState.email, password: formState.password });
-      console.log("Logged in as", resp.user);
-      navigate("/", { replace: true });
+      localStorage.setItem("accessToken", resp.tokens.accessToken);
+      localStorage.setItem("refreshToken", resp.tokens.refreshToken);
+      localStorage.setItem("user", JSON.stringify(resp.user));
+      const role = resp.user.role?.toUpperCase();
+      if (role === "ADMIN") {
+        navigate("/admin-dashboard", { replace: true });
+      } else if (role === "MANAGER") {
+        navigate("/manager-dashboard", { replace: true });
+      } else {
+        navigate("/expenses", { replace: true });
+      }
     } catch (error) {
       setErrors({ global: (error as Error).message });
     } finally {
@@ -47,6 +58,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
       <Card title="Login">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {infoMessage ? <p className="rounded-md bg-emerald-50 p-2 text-sm text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200">{infoMessage}</p> : null}
           {errors.global ? <p className="rounded-md bg-rose-50 p-2 text-sm text-rose-700 dark:bg-rose-900 dark:text-rose-200">{errors.global}</p> : null}
 
           <div>

@@ -6,9 +6,11 @@ export interface AuthFormState {
   password: string;
   confirmPassword: string;
   country: string;
+  baseCurrency: string;
+  currencySymbol: string;
 }
 
-export function useAuthForm(initialState: AuthFormState = { name: "", email: "", password: "", confirmPassword: "", country: "" }) {
+export function useAuthForm(initialState: AuthFormState = { name: "", email: "", password: "", confirmPassword: "", country: "", baseCurrency: "", currencySymbol: "" }) {
   const [formState, setFormState] = useState<AuthFormState>(initialState);
 
   const updateField = (field: keyof AuthFormState, value: string) => {

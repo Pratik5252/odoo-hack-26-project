@@ -1,36 +1,64 @@
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export interface AuthPayload {
   name?: string;
   email: string;
   password: string;
   country?: string;
+  baseCurrency?: string;
+  currencySymbol?: string;
 }
 
-export async function login({ email, password, country }: AuthPayload) {
-  await new Promise((resolve) => setTimeout(resolve, 700));
-
-  if (!email.includes("@") || password.length < 6) {
-    throw new Error("Invalid email or password.");
-  }
-
-  return {
-    token: "dummy-jwt-token",
-    user: { email, role: "admin", country: country ?? "Unknown" },
+export type AuthResponse = {
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+    role: string;
+    companyId: string | null;
   };
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+};
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message: string;
 }
 
-export async function signup({ name, email, password, country }: AuthPayload) {
-  await new Promise((resolve) => setTimeout(resolve, 700));
+async function callApi<T>(url: string, body: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
 
-  if (!name || name.length < 2) {
-    throw new Error("Name must be at least 2 characters.");
+  let json: ApiResponse<T> | null = null;
+
+  try {
+    json = await response.json();
+  } catch {
+    throw new Error("Unexpected server response");
   }
 
-  if (!email.includes("@") || password.length < 6) {
-    throw new Error("Invalid email or password.");
+  if (!response.ok || !json?.success) {
+    throw new Error(json?.message || response.statusText || "Authentication failed");
   }
 
-  return {
-    token: "dummy-jwt-token",
-    user: { name, email, role: "admin", country: country ?? "Unknown" },
-  };
+  return json.data;
+}
+
+export async function login({ email, password }: AuthPayload): Promise<AuthResponse> {
+  const payload = { email, password };
+  return await callApi<AuthResponse>(`${API_BASE_URL}/auth/login`, payload);
+}
+
+export async function signup({ name, email, password, country, baseCurrency, currencySymbol }: AuthPayload): Promise<AuthResponse> {
+  const payload = { name, email, password, country, baseCurrency, currencySymbol };
+  return await callApi<AuthResponse>(`${API_BASE_URL}/auth/signup`, payload);
 }

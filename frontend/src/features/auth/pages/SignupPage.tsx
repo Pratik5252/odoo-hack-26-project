@@ -10,11 +10,13 @@ import { useAuthForm } from "../hooks/useAuthForm";
 
 interface CountryOption {
   label: string;
-  value: string;
+  country: string;
+  currencyCode: string;
+  currencySymbol: string;
 }
 
 export function SignupPage() {
-  const { formState, updateField } = useAuthForm({ name: "", email: "", password: "", confirmPassword: "", country: "" });
+  const { formState, updateField } = useAuthForm({ name: "", email: "", password: "", confirmPassword: "", country: "", baseCurrency: "", currencySymbol: "" });
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirmPassword?: string; country?: string; global?: string }>({});
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [countriesLoading, setCountriesLoading] = useState(true);
@@ -29,11 +31,22 @@ export function SignupPage() {
         const data = await response.json();
 
         const options: CountryOption[] = data
-          .map((country: any) => {
-            const label = country.name?.common || "Unknown";
-            const currency = country.currencies ? Object.keys(country.currencies)[0] : "";
-            const value = currency ? `${label} (${currency})` : label;
-            return { label: value, value };
+          .map((country: unknown) => {
+            const countryData = country as {
+              name?: { common?: string };
+              currencies?: Record<string, { symbol?: string }>;
+            };
+            const label = countryData.name?.common || "Unknown";
+            const currencyCode = countryData.currencies ? Object.keys(countryData.currencies)[0] : "";
+            const currencyMeta = currencyCode ? countryData.currencies?.[currencyCode] : undefined;
+            const currencySymbol = currencyMeta?.symbol || currencyCode || "";
+            const displayLabel = currencyCode ? `${label} (${currencyCode})` : label;
+            return {
+              label: displayLabel,
+              country: label,
+              currencyCode,
+              currencySymbol,
+            };
           })
           .sort((a: CountryOption, b: CountryOption) => a.label.localeCompare(b.label));
 
@@ -57,6 +70,7 @@ export function SignupPage() {
     if (!formState.password) nextErrors.password = "Password is required.";
     if (!formState.confirmPassword) nextErrors.confirmPassword = "Confirm password is required.";
     if (!formState.country) nextErrors.country = "Country is required.";
+    if (!formState.baseCurrency || !formState.currencySymbol) nextErrors.country = "Valid country and currency are required.";
     if (formState.password && formState.confirmPassword && formState.password !== formState.confirmPassword) {
       nextErrors.confirmPassword = "Passwords do not match.";
     }
@@ -68,15 +82,34 @@ export function SignupPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
+    const selectedCountry = countries.find((c) => c.label === formState.country);
+    const baseCurrency = selectedCountry?.currencyCode || "";
+    const currencySymbol = selectedCountry?.currencySymbol || "";
+
+    if (!selectedCountry) {
+      setErrors({ country: "Please choose a valid country from the list." });
+      return;
+    }
+
+    updateField("baseCurrency", baseCurrency);
+    updateField("currencySymbol", currencySymbol);
+
     if (!validate()) return;
 
     setIsLoading(true);
     setErrors({});
 
     try {
-      const resp = await signup({ name: formState.name, email: formState.email, password: formState.password, country: formState.country });
-      console.log("Signup admin user created:", resp.user);
-      navigate("/", { replace: true });
+      await signup({
+        name: formState.name,
+        email: formState.email,
+        password: formState.password,
+        country: selectedCountry.country,
+        baseCurrency,
+        currencySymbol,
+      });
+      setErrors({});
+      navigate("/login", { replace: true, state: { message: "Registration successful. Please log in." } });
     } catch (error) {
       setErrors({ global: (error as Error).message });
     } finally {
@@ -143,13 +176,24 @@ export function SignupPage() {
             <select
               id="country"
               value={formState.country}
-              onChange={(event) => updateField("country", event.target.value)}
+              onChange={(event) => {
+                const selected = countries.find((c) => c.label === event.target.value);
+                if (selected) {
+                  updateField("country", selected.label);
+                  updateField("baseCurrency", selected.currencyCode);
+                  updateField("currencySymbol", selected.currencySymbol);
+                } else {
+                  updateField("country", "");
+                  updateField("baseCurrency", "");
+                  updateField("currencySymbol", "");
+                }
+              }}
               className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               <option value="">Select a country</option>
               {countriesLoading ? <option value="">Loading countries...</option> : null}
               {countries.map((country) => (
-                <option key={country.value} value={country.value}>
+                <option key={country.label} value={country.label}>
                   {country.label}
                 </option>
               ))}
