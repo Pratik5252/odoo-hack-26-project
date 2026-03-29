@@ -11,3 +11,69 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Role {
+  EMPLOYEE
+  ADMIN
+  MANAGER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  managerId String?
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  role      Role     @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workflows Workflow[]
+  approvals Approver[]
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  country   String
+  baseCurrency String
+  currencySymbol   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+
+}
+
+model Workflow {
+  id        String   @id @default(uuid())
+  name      String
+  decription String?
+  isManageApproved Boolean  @default(false)
+  isApprovalSequence Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  approvers  Approver[]
+}
+
+model Approver {
+  id         String   @id @default(uuid())
+  isRequired Boolean  @default(false)
+
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id])
+
+  approverId String
+  approver   User     @relation(fields: [approverId], references: [id])
+
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([workflowId, approverId])
+
+}
