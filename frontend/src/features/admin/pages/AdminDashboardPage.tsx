@@ -94,6 +94,7 @@ export function AdminDashboardPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [approvalRules, setApprovalRules] = useState<ApprovalRule[]>(INITIAL_APPROVAL_RULES);
   const [approvalModalUserId, setApprovalModalUserId] = useState<string | null>(null);
+  const [newApproverManagerId, setNewApproverManagerId] = useState<string>("");
   const [sendingPasswordUserId, setSendingPasswordUserId] = useState<string | null>(null);
   const [sendPasswordError, setSendPasswordError] = useState<string | null>(null);
   const [createUserError, setCreateUserError] = useState<string | null>(null);
@@ -252,6 +253,46 @@ export function AdminDashboardPage() {
     );
   };
 
+  const handleAddApprover = (ruleId: string) => {
+    if (!newApproverManagerId) return;
+    
+    const selectedManager = managers.find((m) => m.id === newApproverManagerId);
+    if (!selectedManager) return;
+
+    setApprovalRules((prev) =>
+      prev.map((rule) =>
+        rule.id === ruleId
+          ? {
+              ...rule,
+              approvers: [
+                ...rule.approvers,
+                {
+                  id: `approver-${Date.now()}`,
+                  name: formatManagerOption(selectedManager),
+                  isRequired: false,
+                },
+              ],
+            }
+          : rule
+      )
+    );
+    
+    setNewApproverManagerId("");
+  };
+
+  const handleRemoveApprover = (ruleId: string, approverId: string) => {
+    setApprovalRules((prev) =>
+      prev.map((rule) =>
+        rule.id === ruleId
+          ? {
+              ...rule,
+              approvers: rule.approvers.filter((app) => app.id !== approverId),
+            }
+          : rule
+      )
+    );
+  };
+
   const renderApprovalRuleForm = (rule: ApprovalRule) => (
     <div className="grid gap-6 rounded-xl border border-slate-200 p-4 dark:border-slate-700 lg:grid-cols-2 lg:p-6">
       <div className="space-y-4">
@@ -335,6 +376,29 @@ export function AdminDashboardPage() {
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Approvers</h3>
 
+        <div className="flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+          <select
+            value={newApproverManagerId}
+            onChange={(event) => setNewApproverManagerId(event.target.value)}
+            className={SELECT_STYLE}
+          >
+            <option value="">Select a manager to add</option>
+            {managers.map((m) => (
+              <option key={m.id} value={m.id}>
+                {formatManagerOption(m)}
+              </option>
+            ))}
+          </select>
+          <Button
+            type="button"
+            onClick={() => handleAddApprover(rule.id)}
+            disabled={!newApproverManagerId}
+            className="whitespace-nowrap"
+          >
+            + Add
+          </Button>
+        </div>
+
         <div className="space-y-2">
           {rule.approvers.map((approver, index) => (
             <div
@@ -362,6 +426,14 @@ export function AdminDashboardPage() {
               >
                 {approver.isRequired ? "Required" : "Optional"}
               </span>
+              <button
+                type="button"
+                onClick={() => handleRemoveApprover(rule.id, approver.id)}
+                className="ml-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                aria-label={`Remove ${approver.name} as approver`}
+              >
+                ✕
+              </button>
             </div>
           ))}
         </div>
@@ -417,6 +489,16 @@ export function AdminDashboardPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mt-6 flex gap-3 border-t border-slate-200 pt-6 dark:border-slate-700">
+        <Button
+          type="button"
+          onClick={() => setApprovalModalUserId(null)}
+          className="flex-1"
+        >
+          Save & Close
+        </Button>
       </div>
     </div>
   );
