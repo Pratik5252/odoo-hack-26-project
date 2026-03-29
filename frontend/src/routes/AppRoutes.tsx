@@ -3,6 +3,7 @@ import { LoginPage } from "../features/auth/pages/LoginPage";
 import { SignupPage } from "../features/auth/pages/SignupPage";
 import { ExpenseDashboardPage } from "../features/expenses/pages/ExpenseDashboardPage";
 import { AdminDashboardPage } from "../features/admin/pages/AdminDashboardPage";
+import { ManagerDashboardPage } from "../features/admin/pages/ManagerDashboardPage";
 
 export function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ export function AppRoutes() {
         <Route path="/expenses/new" element={<ExpenseDashboardPage />} />
         <Route path="*" element={<Navigate to="/expenses" replace />} />
         <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+        <Route path="/manager-dashboard" element={<ManagerDashboardPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
