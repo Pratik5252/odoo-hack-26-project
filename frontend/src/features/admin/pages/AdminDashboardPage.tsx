@@ -92,11 +92,19 @@ export function AdminDashboardPage() {
 
   const [showAddUser, setShowAddUser] = useState(false);
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [approvalRules, setApprovalRules] = useState<ApprovalRule[]>(INITIAL_APPROVAL_RULES);
-  const [approvalModalUserId, setApprovalModalUserId] = useState<string | null>(null);
+  const [approvalRules, setApprovalRules] = useState<ApprovalRule[]>(
+    INITIAL_APPROVAL_RULES,
+  );
+  const [approvalModalUserId, setApprovalModalUserId] = useState<string | null>(
+    null,
+  );
   const [newApproverManagerId, setNewApproverManagerId] = useState<string>("");
-  const [sendingPasswordUserId, setSendingPasswordUserId] = useState<string | null>(null);
-  const [sendPasswordError, setSendPasswordError] = useState<string | null>(null);
+  const [sendingPasswordUserId, setSendingPasswordUserId] = useState<
+    string | null
+  >(null);
+  const [sendPasswordError, setSendPasswordError] = useState<string | null>(
+    null,
+  );
   const [createUserError, setCreateUserError] = useState<string | null>(null);
   const [creatingUser, setCreatingUser] = useState(false);
   const [newUserPassword, setNewUserPassword] = useState("");
@@ -126,7 +134,9 @@ export function AdminDashboardPage() {
         setUsers(list.map(mapTeamUserToRow));
       } catch (e) {
         if (!cancelled) {
-          setTeamLoadError(e instanceof Error ? e.message : "Could not load users.");
+          setTeamLoadError(
+            e instanceof Error ? e.message : "Could not load users.",
+          );
           setTeamUsers([]);
           setUsers([]);
         }
@@ -142,21 +152,35 @@ export function AdminDashboardPage() {
 
   const canAddUser = useMemo(() => {
     const hasBasics =
-      newUser.user.trim() !== "" && newUser.email.trim() !== "" && newUserPassword.length >= 8;
+      newUser.user.trim() !== "" &&
+      newUser.email.trim() !== "" &&
+      newUserPassword.length >= 8;
     if (!hasBasics) return false;
     if (newUser.role === "Employee") {
       return Boolean(newUser.managerId);
     }
     return true;
-  }, [newUser.email, newUser.managerId, newUser.role, newUser.user, newUserPassword.length]);
+  }, [
+    newUser.email,
+    newUser.managerId,
+    newUser.role,
+    newUser.user,
+    newUserPassword.length,
+  ]);
 
   const activeRule = useMemo(
     () => approvalRules.find((r) => r.userId === approvalModalUserId) ?? null,
-    [approvalRules, approvalModalUserId]
+    [approvalRules, approvalModalUserId],
   );
 
-  const updateExistingUser = (id: string, field: "user" | "role" | "managerId" | "email", value: string | null) => {
-    setUsers((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  const updateExistingUser = (
+    id: string,
+    field: "user" | "role" | "managerId" | "email",
+    value: string | null,
+  ) => {
+    setUsers((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    );
   };
 
   const handleAddUser = async () => {
@@ -185,7 +209,9 @@ export function AdminDashboardPage() {
       setNewUserPassword("");
       setShowAddUser(false);
     } catch (e) {
-      setCreateUserError(e instanceof Error ? e.message : "Failed to create user.");
+      setCreateUserError(
+        e instanceof Error ? e.message : "Failed to create user.",
+      );
     } finally {
       setCreatingUser(false);
     }
@@ -199,7 +225,9 @@ export function AdminDashboardPage() {
       const exists = prev.some((r) => r.userId === userId);
       if (exists) {
         return prev.map((r) =>
-          r.userId === userId ? { ...r, user: user.user, managerId: user.managerId } : r
+          r.userId === userId
+            ? { ...r, user: user.user, managerId: user.managerId }
+            : r,
         );
       }
       return [...prev, createDefaultApprovalRule(user)];
@@ -209,14 +237,16 @@ export function AdminDashboardPage() {
 
   const markPasswordSent = (userId: string) => {
     setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, passwordSent: true } : u))
+      prev.map((u) => (u.id === userId ? { ...u, passwordSent: true } : u)),
     );
   };
 
   const handleSendPassword = async (row: UserRow) => {
     const email = row.email.trim();
     if (!email) {
-      setSendPasswordError("Add an email for this user before sending a password.");
+      setSendPasswordError(
+        "Add an email for this user before sending a password.",
+      );
       return;
     }
 
@@ -226,36 +256,48 @@ export function AdminDashboardPage() {
       await sendUserPassword(email);
       markPasswordSent(row.id);
     } catch (err) {
-      setSendPasswordError(err instanceof Error ? err.message : "Could not send password.");
+      setSendPasswordError(
+        err instanceof Error ? err.message : "Could not send password.",
+      );
     } finally {
       setSendingPasswordUserId(null);
     }
   };
 
-  const updateApprovalRule = (ruleId: string, field: keyof ApprovalRule, value: unknown) => {
+  const updateApprovalRule = (
+    ruleId: string,
+    field: keyof ApprovalRule,
+    value: unknown,
+  ) => {
     setApprovalRules((prev) =>
-      prev.map((rule) => (rule.id === ruleId ? { ...rule, [field]: value } : rule))
+      prev.map((rule) =>
+        rule.id === ruleId ? { ...rule, [field]: value } : rule,
+      ),
     );
   };
 
-  const updateApproverRequired = (ruleId: string, approverId: string, isRequired: boolean) => {
+  const updateApproverRequired = (
+    ruleId: string,
+    approverId: string,
+    isRequired: boolean,
+  ) => {
     setApprovalRules((prev) =>
       prev.map((rule) =>
         rule.id === ruleId
           ? {
               ...rule,
               approvers: rule.approvers.map((app) =>
-                app.id === approverId ? { ...app, isRequired } : app
+                app.id === approverId ? { ...app, isRequired } : app,
               ),
             }
-          : rule
-      )
+          : rule,
+      ),
     );
   };
 
   const handleAddApprover = (ruleId: string) => {
     if (!newApproverManagerId) return;
-    
+
     const selectedManager = managers.find((m) => m.id === newApproverManagerId);
     if (!selectedManager) return;
 
@@ -273,10 +315,10 @@ export function AdminDashboardPage() {
                 },
               ],
             }
-          : rule
-      )
+          : rule,
+      ),
     );
-    
+
     setNewApproverManagerId("");
   };
 
@@ -288,15 +330,17 @@ export function AdminDashboardPage() {
               ...rule,
               approvers: rule.approvers.filter((app) => app.id !== approverId),
             }
-          : rule
-      )
+          : rule,
+      ),
     );
   };
 
   const renderApprovalRuleForm = (rule: ApprovalRule) => (
     <div className="grid gap-6 rounded-xl border border-slate-200 p-4 dark:border-slate-700 lg:grid-cols-2 lg:p-6">
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Rule Configuration</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          Rule Configuration
+        </h3>
 
         <div>
           <Label htmlFor={`rule-user-${rule.id}`} className="font-medium">
@@ -306,7 +350,9 @@ export function AdminDashboardPage() {
             id={`rule-user-${rule.id}`}
             aria-label={`Approval rule user ${rule.user}`}
             value={rule.user}
-            onChange={(event) => updateApprovalRule(rule.id, "user", event.target.value)}
+            onChange={(event) =>
+              updateApprovalRule(rule.id, "user", event.target.value)
+            }
             className="mt-1"
           />
         </div>
@@ -333,8 +379,8 @@ export function AdminDashboardPage() {
             ))}
           </select>
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Dynamic dropdown. Initially the manager set on user record should be set, admin can change manager for
-            approval if required.
+            Dynamic dropdown. Initially the manager set on user record should be
+            set, admin can change manager for approval if required.
           </p>
         </div>
 
@@ -346,7 +392,9 @@ export function AdminDashboardPage() {
             id={`rule-desc-${rule.id}`}
             aria-label="Rule description"
             value={rule.ruleDescription}
-            onChange={(event) => updateApprovalRule(rule.id, "ruleDescription", event.target.value)}
+            onChange={(event) =>
+              updateApprovalRule(rule.id, "ruleDescription", event.target.value)
+            }
             placeholder="e.g., Approval rule for miscellaneous expenses"
             className="mt-1"
           />
@@ -359,22 +407,33 @@ export function AdminDashboardPage() {
               id={`manager-approver-${rule.id}`}
               aria-label="Is manager an approver"
               checked={rule.isManagerApprover}
-              onChange={(event) => updateApprovalRule(rule.id, "isManagerApprover", event.target.checked)}
+              onChange={(event) =>
+                updateApprovalRule(
+                  rule.id,
+                  "isManagerApprover",
+                  event.target.checked,
+                )
+              }
               className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-2 focus:ring-amber-500 dark:border-slate-600"
             />
-            <Label htmlFor={`manager-approver-${rule.id}`} className="mb-0 text-sm font-medium">
+            <Label
+              htmlFor={`manager-approver-${rule.id}`}
+              className="mb-0 text-sm font-medium"
+            >
               Is manager an approver?
             </Label>
           </div>
           <p className="text-xs text-amber-900 dark:text-amber-200">
-            If this field is checked then by default the approval request would go to his/her manager first. Before
-            going to other approvers.
+            If this field is checked then by default the approval request would
+            go to his/her manager first. Before going to other approvers.
           </p>
         </div>
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Approvers</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          Approvers
+        </h3>
 
         <div className="flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
           <select
@@ -408,13 +467,21 @@ export function AdminDashboardPage() {
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
                 {index + 1}
               </span>
-              <span className="flex-1 text-sm font-medium text-slate-900 dark:text-slate-100">{approver.name}</span>
+              <span className="flex-1 text-sm font-medium text-slate-900 dark:text-slate-100">
+                {approver.name}
+              </span>
               <input
                 type="checkbox"
                 id={`approver-required-${rule.id}-${approver.id}`}
                 aria-label={`${approver.name} is required`}
                 checked={approver.isRequired}
-                onChange={(event) => updateApproverRequired(rule.id, approver.id, event.target.checked)}
+                onChange={(event) =>
+                  updateApproverRequired(
+                    rule.id,
+                    approver.id,
+                    event.target.checked,
+                  )
+                }
                 className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 dark:border-slate-600"
               />
               <span
@@ -445,7 +512,13 @@ export function AdminDashboardPage() {
               id={`sequential-${rule.id}`}
               aria-label="Approvers sequence"
               checked={rule.approvalsSequential}
-              onChange={(event) => updateApprovalRule(rule.id, "approvalsSequential", event.target.checked)}
+              onChange={(event) =>
+                updateApprovalRule(
+                  rule.id,
+                  "approvalsSequential",
+                  event.target.checked,
+                )
+              }
               className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 dark:border-slate-600"
             />
             <div>
@@ -456,12 +529,15 @@ export function AdminDashboardPage() {
                 Approvers Sequence
               </Label>
               <p className="text-xs text-indigo-800 dark:text-indigo-200">
-                If this field is ticked true then the above mentioned sequence of approvers matters, that is First the
-                request goes to John, if he approves/rejects then only request goes to mitchell and so on.
+                If this field is ticked true then the above mentioned sequence
+                of approvers matters, that is First the request goes to John, if
+                he approves/rejects then only request goes to mitchell and so
+                on.
               </p>
               <p className="mt-2 text-xs font-medium text-indigo-800 dark:text-indigo-200">
-                If the required approver rejects the request, then expense request is auto-rejected. If not ticked then
-                send approver request to all approvers at the same time.
+                If the required approver rejects the request, then expense
+                request is auto-rejected. If not ticked then send approver
+                request to all approvers at the same time.
               </p>
             </div>
           </div>
@@ -481,11 +557,19 @@ export function AdminDashboardPage() {
                 min="0"
                 max="100"
                 value={rule.minimumApprovalPercentage}
-                onChange={(event) => updateApprovalRule(rule.id, "minimumApprovalPercentage", event.target.value)}
+                onChange={(event) =>
+                  updateApprovalRule(
+                    rule.id,
+                    "minimumApprovalPercentage",
+                    event.target.value,
+                  )
+                }
                 placeholder="50"
                 className="w-20"
               />
-              <span className="flex items-center text-sm font-semibold text-indigo-900 dark:text-indigo-100">%</span>
+              <span className="flex items-center text-sm font-semibold text-indigo-900 dark:text-indigo-100">
+                %
+              </span>
             </div>
           </div>
         </div>
@@ -509,8 +593,12 @@ export function AdminDashboardPage() {
         <Card className="max-w-none bg-white/95 backdrop-blur dark:bg-slate-900/95">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-[30px]">Admin Dashboard</h1>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-300 sm:text-sm">Manage users, roles, and approval rules.</p>
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-[30px]">
+                Admin Dashboard
+              </h1>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-300 sm:text-sm">
+                Manage users, roles, and approval rules.
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="w-fit rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200">
@@ -523,13 +611,20 @@ export function AdminDashboardPage() {
 
         <div className="space-y-6">
           <div className="flex gap-3">
-            <Button type="button" onClick={() => setShowAddUser(!showAddUser)} className="sm:w-auto">
+            <Button
+              type="button"
+              onClick={() => setShowAddUser(!showAddUser)}
+              className="sm:w-auto"
+            >
               {showAddUser ? "✕ Cancel" : "+ Add User"}
             </Button>
           </div>
 
           {showAddUser && (
-            <Card title="Add New User" className="max-w-none border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white dark:border-indigo-800 dark:from-indigo-950 dark:to-slate-900">
+            <Card
+              title="Add New User"
+              className="max-w-none border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white dark:border-indigo-800 dark:from-indigo-950 dark:to-slate-900"
+            >
               {createUserError ? (
                 <p
                   className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200"
@@ -553,7 +648,12 @@ export function AdminDashboardPage() {
                     id="new-user-name"
                     aria-label="New user name"
                     value={newUser.user}
-                    onChange={(event) => setNewUser((prev) => ({ ...prev, user: event.target.value }))}
+                    onChange={(event) =>
+                      setNewUser((prev) => ({
+                        ...prev,
+                        user: event.target.value,
+                      }))
+                    }
                     placeholder="John Doe"
                   />
                 </div>
@@ -589,7 +689,12 @@ export function AdminDashboardPage() {
                     aria-label="New user email"
                     type="email"
                     value={newUser.email}
-                    onChange={(event) => setNewUser((prev) => ({ ...prev, email: event.target.value }))}
+                    onChange={(event) =>
+                      setNewUser((prev) => ({
+                        ...prev,
+                        email: event.target.value,
+                      }))
+                    }
                     placeholder="user@email.com"
                   />
                 </div>
@@ -603,7 +708,10 @@ export function AdminDashboardPage() {
                       value={newUser.managerId ?? ""}
                       onChange={(event) => {
                         const v = event.target.value;
-                        setNewUser((prev) => ({ ...prev, managerId: v === "" ? null : v }));
+                        setNewUser((prev) => ({
+                          ...prev,
+                          managerId: v === "" ? null : v,
+                        }));
                       }}
                       className={SELECT_STYLE}
                     >
@@ -614,11 +722,15 @@ export function AdminDashboardPage() {
                         </option>
                       ))}
                     </select>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Required for employees.</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Required for employees.
+                    </p>
                   </div>
                 ) : null}
 
-                <div className={newUser.role === "Employee" ? "" : "md:col-span-2"}>
+                <div
+                  className={newUser.role === "Employee" ? "" : "md:col-span-2"}
+                >
                   <Label htmlFor="new-user-password">Temporary password</Label>
                   <Input
                     id="new-user-password"
@@ -630,7 +742,8 @@ export function AdminDashboardPage() {
                     placeholder="At least 8 characters"
                   />
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Stored securely; share via “Send password” if you prefer email delivery.
+                    Stored securely; share via “Send password” if you prefer
+                    email delivery.
                   </p>
                 </div>
               </div>
@@ -667,180 +780,250 @@ export function AdminDashboardPage() {
               </p>
             )}
             {usersLoading ? (
-              <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading users…</p>
+              <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                Loading users…
+              </p>
             ) : null}
             {!usersLoading && (
               <>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[820px] text-left">
-                <thead>
-                  <tr className="border-b border-slate-200 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
-                    <th className="px-3 py-3 font-semibold">User</th>
-                    <th className="px-3 py-3 font-semibold">Role</th>
-                    <th className="px-3 py-3 font-semibold">Manager</th>
-                    <th className="px-3 py-3 font-semibold">Email</th>
-                    <th className="px-3 py-3 font-semibold">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full min-w-[820px] text-left">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                        <th className="px-3 py-3 font-semibold">User</th>
+                        <th className="px-3 py-3 font-semibold">Role</th>
+                        <th className="px-3 py-3 font-semibold">Manager</th>
+                        <th className="px-3 py-3 font-semibold">Email</th>
+                        <th className="px-3 py-3 font-semibold">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="border-b border-slate-100 align-top last:border-b-0 dark:border-slate-800"
+                        >
+                          <td className="px-3 py-3">
+                            <Input
+                              aria-label={`User name ${item.user}`}
+                              value={item.user}
+                              onChange={(event) =>
+                                updateExistingUser(
+                                  item.id,
+                                  "user",
+                                  event.target.value,
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-3 py-3">
+                            <select
+                              aria-label={`Role for ${item.user}`}
+                              value={item.role}
+                              onChange={(event) =>
+                                updateExistingUser(
+                                  item.id,
+                                  "role",
+                                  event.target.value,
+                                )
+                              }
+                              className={SELECT_STYLE}
+                            >
+                              {ROLE_OPTIONS.map((role) => (
+                                <option key={role} value={role}>
+                                  {role}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-3 py-3">
+                            <select
+                              aria-label={`Manager for ${item.user}`}
+                              value={item.managerId ?? ""}
+                              onChange={(event) => {
+                                const v = event.target.value;
+                                updateExistingUser(
+                                  item.id,
+                                  "managerId",
+                                  v === "" ? null : v,
+                                );
+                              }}
+                              disabled={item.role === "Manager"}
+                              className={
+                                SELECT_STYLE +
+                                (item.role === "Manager"
+                                  ? " opacity-50 cursor-not-allowed"
+                                  : "")
+                              }
+                            >
+                              <option value="">No manager</option>
+                              {managers.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {formatManagerOption(m)}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-3 py-3">
+                            <Input
+                              aria-label={`Email for ${item.user}`}
+                              type="email"
+                              value={item.email}
+                              onChange={(event) =>
+                                updateExistingUser(
+                                  item.id,
+                                  "email",
+                                  event.target.value,
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                type="button"
+                                disabled={item.role === "Manager"}
+                                className="!bg-transparent !text-indigo-700 border border-indigo-300 hover:!bg-indigo-50 dark:border-indigo-600 dark:!text-indigo-200 dark:hover:!bg-indigo-950/50 text-xs sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => openApprovalModal(item.id)}
+                              >
+                                Approval Rules
+                              </Button>
+                              {!item.passwordSent && (
+                                <Button
+                                  type="button"
+                                  className="text-xs sm:w-auto"
+                                  disabled={sendingPasswordUserId === item.id}
+                                  onClick={() => void handleSendPassword(item)}
+                                >
+                                  {sendingPasswordUserId === item.id
+                                    ? "Sending…"
+                                    : "Send password"}
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="space-y-4 md:hidden">
                   {users.map((item) => (
-                    <tr key={item.id} className="border-b border-slate-100 align-top last:border-b-0 dark:border-slate-800">
-                      <td className="px-3 py-3">
-                        <Input
-                          aria-label={`User name ${item.user}`}
-                          value={item.user}
-                          onChange={(event) => updateExistingUser(item.id, "user", event.target.value)}
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <select
-                          aria-label={`Role for ${item.user}`}
-                          value={item.role}
-                          onChange={(event) => updateExistingUser(item.id, "role", event.target.value)}
-                          className={SELECT_STYLE}
+                    <div
+                      key={item.id}
+                      className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                    >
+                      <div className="mb-3 grid gap-3">
+                        <div>
+                          <Label htmlFor={`user-${item.id}`}>User</Label>
+                          <Input
+                            id={`user-${item.id}`}
+                            aria-label={`User name ${item.user}`}
+                            value={item.user}
+                            onChange={(event) =>
+                              updateExistingUser(
+                                item.id,
+                                "user",
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`role-${item.id}`}>Role</Label>
+                          <select
+                            id={`role-${item.id}`}
+                            aria-label={`Role for ${item.user}`}
+                            value={item.role}
+                            onChange={(event) =>
+                              updateExistingUser(
+                                item.id,
+                                "role",
+                                event.target.value,
+                              )
+                            }
+                            className={SELECT_STYLE}
+                          >
+                            {ROLE_OPTIONS.map((role) => (
+                              <option key={role} value={role}>
+                                {role}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <Label htmlFor={`manager-${item.id}`}>Manager</Label>
+                          <select
+                            id={`manager-${item.id}`}
+                            aria-label={`Manager for ${item.user}`}
+                            value={item.managerId ?? ""}
+                            onChange={(event) => {
+                              const v = event.target.value;
+                              updateExistingUser(
+                                item.id,
+                                "managerId",
+                                v === "" ? null : v,
+                              );
+                            }}
+                            disabled={item.role === "Manager"}
+                            className={
+                              SELECT_STYLE +
+                              (item.role === "Manager"
+                                ? " opacity-50 cursor-not-allowed"
+                                : "")
+                            }
+                          >
+                            <option value="">No manager</option>
+                            {managers.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {formatManagerOption(m)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <Label htmlFor={`email-${item.id}`}>Email</Label>
+                          <Input
+                            id={`email-${item.id}`}
+                            aria-label={`Email for ${item.user}`}
+                            type="email"
+                            value={item.email}
+                            onChange={(event) =>
+                              updateExistingUser(
+                                item.id,
+                                "email",
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          disabled={item.role === "Manager"}
+                          className="!bg-transparent !text-indigo-700 border border-indigo-300 hover:!bg-indigo-50 dark:border-indigo-600 dark:!text-indigo-200 dark:hover:!bg-indigo-950/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => openApprovalModal(item.id)}
                         >
-                          {ROLE_OPTIONS.map((role) => (
-                            <option key={role} value={role}>
-                              {role}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-3 py-3">
-                        <select
-                          aria-label={`Manager for ${item.user}`}
-                          value={item.managerId ?? ""}
-                          onChange={(event) => {
-                            const v = event.target.value;
-                            updateExistingUser(item.id, "managerId", v === "" ? null : v);
-                          }}
-                          className={SELECT_STYLE}
-                        >
-                          <option value="">No manager</option>
-                          {managers.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {formatManagerOption(m)}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-3 py-3">
-                        <Input
-                          aria-label={`Email for ${item.user}`}
-                          type="email"
-                          value={item.email}
-                          onChange={(event) => updateExistingUser(item.id, "email", event.target.value)}
-                        />
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex flex-wrap gap-2">
+                          Approval Rules
+                        </Button>
+                        {!item.passwordSent && (
                           <Button
                             type="button"
-                            className="!bg-transparent !text-indigo-700 border border-indigo-300 hover:!bg-indigo-50 dark:border-indigo-600 dark:!text-indigo-200 dark:hover:!bg-indigo-950/50 text-xs sm:w-auto"
-                            onClick={() => openApprovalModal(item.id)}
+                            disabled={sendingPasswordUserId === item.id}
+                            onClick={() => void handleSendPassword(item)}
                           >
-                            Approval Rules
+                            {sendingPasswordUserId === item.id
+                              ? "Sending…"
+                              : "Send password"}
                           </Button>
-                          {!item.passwordSent && (
-                            <Button
-                              type="button"
-                              className="text-xs sm:w-auto"
-                              disabled={sendingPasswordUserId === item.id}
-                              onClick={() => void handleSendPassword(item)}
-                            >
-                              {sendingPasswordUserId === item.id ? "Sending…" : "Send password"}
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                        )}
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="space-y-4 md:hidden">
-              {users.map((item) => (
-                <div key={item.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                  <div className="mb-3 grid gap-3">
-                    <div>
-                      <Label htmlFor={`user-${item.id}`}>User</Label>
-                      <Input
-                        id={`user-${item.id}`}
-                        aria-label={`User name ${item.user}`}
-                        value={item.user}
-                        onChange={(event) => updateExistingUser(item.id, "user", event.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`role-${item.id}`}>Role</Label>
-                      <select
-                        id={`role-${item.id}`}
-                        aria-label={`Role for ${item.user}`}
-                        value={item.role}
-                        onChange={(event) => updateExistingUser(item.id, "role", event.target.value)}
-                        className={SELECT_STYLE}
-                      >
-                        {ROLE_OPTIONS.map((role) => (
-                          <option key={role} value={role}>
-                            {role}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <Label htmlFor={`manager-${item.id}`}>Manager</Label>
-                      <select
-                        id={`manager-${item.id}`}
-                        aria-label={`Manager for ${item.user}`}
-                        value={item.managerId ?? ""}
-                        onChange={(event) => {
-                          const v = event.target.value;
-                          updateExistingUser(item.id, "managerId", v === "" ? null : v);
-                        }}
-                        className={SELECT_STYLE}
-                      >
-                        <option value="">No manager</option>
-                        {managers.map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {formatManagerOption(m)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <Label htmlFor={`email-${item.id}`}>Email</Label>
-                      <Input
-                        id={`email-${item.id}`}
-                        aria-label={`Email for ${item.user}`}
-                        type="email"
-                        value={item.email}
-                        onChange={(event) => updateExistingUser(item.id, "email", event.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      className="!bg-transparent !text-indigo-700 border border-indigo-300 hover:!bg-indigo-50 dark:border-indigo-600 dark:!text-indigo-200 dark:hover:!bg-indigo-950/50"
-                      onClick={() => openApprovalModal(item.id)}
-                    >
-                      Approval Rules
-                    </Button>
-                    {!item.passwordSent && (
-                      <Button
-                        type="button"
-                        disabled={sendingPasswordUserId === item.id}
-                        onClick={() => void handleSendPassword(item)}
-                      >
-                        {sendingPasswordUserId === item.id ? "Sending…" : "Send password"}
-                      </Button>
-                    )}
-                  </div>
                 </div>
-              ))}
-            </div>
               </>
             )}
           </Card>
