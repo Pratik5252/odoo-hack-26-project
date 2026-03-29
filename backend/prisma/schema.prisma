@@ -33,6 +33,13 @@ enum ApprovalStatus {
   REJECTED
 }
 
+// ADDED - Approval Rule Types
+enum ApprovalRuleType {
+  PERCENTAGE
+  SPECIFIC_APPROVER
+  HYBRID
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -46,6 +53,7 @@ model User {
   updatedAt DateTime @updatedAt
   workflows Workflow[]
   approvals Approver[]
+  requiredApprovalRules ApprovalRule[] @relation("RequiredApprover")
 
   // ADDED
   expenses        Expense[]
@@ -76,11 +84,13 @@ model Workflow {
   updatedAt DateTime @updatedAt
 
   approvers  Approver[]
+  approvalRule ApprovalRule?
 }
 
 model Approver {
   id         String   @id @default(uuid())
   isRequired Boolean  @default(false)
+  position   Int?     // Order for sequential approval (nullable for parallel)
 
   workflowId String
   workflow   Workflow @relation(fields: [workflowId], references: [id])
@@ -92,6 +102,26 @@ model Approver {
   updatedAt  DateTime @updatedAt
 
   @@unique([workflowId, approverId])
+}
+
+// ADDED - Approval Rules for Workflows
+model ApprovalRule {
+  id                  String              @id @default(uuid())
+  
+  workflowId          String              @unique
+  workflow            Workflow            @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  ruleType            ApprovalRuleType    @default(HYBRID)
+  
+  // For PERCENTAGE rule: percentage threshold (e.g., 60)
+  percentageThreshold Int?                // 0-100
+  
+  // For SPECIFIC_APPROVER rule: required approver
+  requiredApproverId  String?
+  requiredApprover    User?               @relation("RequiredApprover", fields: [requiredApproverId], references: [id])
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 }
 
 
