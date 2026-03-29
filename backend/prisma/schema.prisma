@@ -18,19 +18,38 @@ enum Role {
   MANAGER
 }
 
+// ADDED
+enum ExpenseStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ADDED
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
+  password  String
   managerId String?
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
   role      Role     @default(ADMIN)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   workflows Workflow[]
   approvals Approver[]
+
+  // ADDED
+  expenses        Expense[]
+  expenseApprovals ExpenseApproval[]
 }
 
 model Company {
@@ -43,7 +62,6 @@ model Company {
   updatedAt DateTime @updatedAt
 
   users     User[]
-
 }
 
 model Workflow {
@@ -70,10 +88,51 @@ model Approver {
   approverId String
   approver   User     @relation(fields: [approverId], references: [id])
 
-
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@unique([workflowId, approverId])
+}
 
+
+// =======================
+// ADDED MODELS BELOW
+// =======================
+
+// ADDED
+model Expense {
+  id          String        @id @default(uuid())
+  userId      String        // ADDED
+  user        User          @relation(fields: [userId], references: [id]) // ADDED
+
+  amount      Float         // ADDED
+  category    String        // ADDED
+  description String?       // ADDED
+  receiptUrl  String?       // ADDED
+
+  status      ExpenseStatus @default(DRAFT) // ADDED
+
+  createdAt   DateTime      @default(now()) // ADDED
+  updatedAt   DateTime      @updatedAt      // ADDED
+
+  approvals   ExpenseApproval[] // ADDED
+}
+
+// ADDED
+model ExpenseApproval {
+  id          String          @id @default(uuid())
+
+  expenseId   String          // ADDED
+  expense     Expense         @relation(fields: [expenseId], references: [id]) // ADDED
+
+  approverId  String          // ADDED
+  approver    User            @relation(fields: [approverId], references: [id]) // ADDED
+
+  status      ApprovalStatus  @default(PENDING) // ADDED
+  comment     String?         // ADDED
+  approvedAt  DateTime?       // ADDED
+
+  createdAt   DateTime        @default(now()) // ADDED
+
+  @@unique([expenseId, approverId]) // ADDED
 }
