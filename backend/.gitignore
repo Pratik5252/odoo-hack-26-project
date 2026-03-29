@@ -33,3 +33,5 @@ Thumbs.db
 .cache/
 temp/
 tmp/
+
+/generated/prisma
