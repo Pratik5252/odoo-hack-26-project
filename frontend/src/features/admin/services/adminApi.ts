@@ -25,15 +25,24 @@ async function parseErrorMessage(res: Response): Promise<string> {
   return `Request failed (${res.status})`;
 }
 
-export async function fetchManagers(accessToken: string): Promise<ManagerOption[]> {
+export async function fetchManagers(
+  accessToken: string,
+): Promise<ManagerOption[]> {
   const res = await fetch(`${getApiBaseUrl()}/users/managers`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  const data = (await res.json()) as { success?: boolean; data?: ManagerOption[]; error?: string; message?: string };
+  const data = (await res.json()) as {
+    success?: boolean;
+    data?: ManagerOption[];
+    error?: string;
+    message?: string;
+  };
 
   if (!res.ok || data.success === false) {
-    throw new Error(data.error || data.message || `Request failed (${res.status})`);
+    throw new Error(
+      data.error || data.message || `Request failed (${res.status})`,
+    );
   }
 
   return data.data ?? [];
@@ -45,10 +54,17 @@ export async function fetchTeamUsers(accessToken: string): Promise<TeamUser[]> {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  const data = (await res.json()) as { success?: boolean; data?: TeamUser[]; error?: string; message?: string };
+  const data = (await res.json()) as {
+    success?: boolean;
+    data?: TeamUser[];
+    error?: string;
+    message?: string;
+  };
 
   if (!res.ok || data.success === false) {
-    throw new Error(data.error || data.message || `Request failed (${res.status})`);
+    throw new Error(
+      data.error || data.message || `Request failed (${res.status})`,
+    );
   }
 
   return data.data ?? [];
@@ -64,7 +80,7 @@ export interface CreateTeamUserPayload {
 
 export async function createTeamUser(
   accessToken: string,
-  payload: CreateTeamUserPayload
+  payload: CreateTeamUserPayload,
 ): Promise<TeamUser> {
   const body: Record<string, unknown> = {
     email: payload.email.trim().toLowerCase(),
@@ -93,7 +109,9 @@ export async function createTeamUser(
   };
 
   if (!res.ok || data.success === false) {
-    throw new Error(data.error || data.message || `Request failed (${res.status})`);
+    throw new Error(
+      data.error || data.message || `Request failed (${res.status})`,
+    );
   }
 
   if (!data.data) {
@@ -107,12 +125,58 @@ export async function sendUserPassword(email: string): Promise<void> {
   const url = `${getApiBaseUrl()}/api/admin/users/send-password`;
 
   const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: email.trim() }),
   });
 
   if (!res.ok) {
     throw new Error(await parseErrorMessage(res));
   }
+}
+
+export interface Expense {
+  id: string;
+  userId: string;
+  amount: number;
+  category: string;
+  description: string | null;
+  receiptUrl: string | null;
+  status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  approvals: Array<{
+    id: string;
+    approverId: string;
+    status: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getManagerTeamExpenses(
+  accessToken: string,
+): Promise<Expense[]> {
+  const res = await fetch(`${getApiBaseUrl()}/expenses/manager/team-expenses`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const data = (await res.json()) as {
+    success?: boolean;
+    data?: Expense[];
+    error?: string;
+    message?: string;
+  };
+  console.log(data);
+
+  if (!res.ok || data.success === false) {
+    throw new Error(
+      data.error || data.message || `Request failed (${res.status})`,
+    );
+  }
+
+  return data.data ?? [];
 }

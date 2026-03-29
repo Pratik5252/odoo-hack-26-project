@@ -22,6 +22,13 @@ router.get('/me', authMiddleware, expenseController.getMyExpenses.bind(expenseCo
 // 2. Routes with specific path segments
 router.get('/user/:userId', expenseController.getExpensesByUserId.bind(expenseController));
 router.get('/status/:status', expenseController.getExpensesByStatus.bind(expenseController));
+router.get('/', expenseController.getAllExpenses.bind(expenseController));
+router.get('/manager/team-expenses', authMiddleware, expenseController.getExpensesByManagerId.bind(expenseController));
+router.get('/user/:userId', expenseController.getExpensesByUserId.bind(expenseController));
+router.get('/status/:status', expenseController.getExpensesByStatus.bind(expenseController));
+router.get('/:id', expenseController.getExpenseById.bind(expenseController));
+router.post('/', expenseController.createExpense.bind(expenseController));
+router.put('/:id', expenseController.updateExpense.bind(expenseController));
 
 // 3. Generic routes
 router.get('/', expenseController.getAllExpenses.bind(expenseController));

@@ -136,6 +136,27 @@ export class ExpenseService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async getExpensesByManagerId(managerId: string) {
+    return prisma.expense.findMany({
+      where: {
+        user: {
+          managerId,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        approvals: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
 
 export const expenseService = new ExpenseService();
