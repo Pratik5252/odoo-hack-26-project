@@ -89,8 +89,8 @@ export function ManagerDashboardPage() {
         <Card className="max-w-none bg-white/95 backdrop-blur dark:bg-slate-900/95">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">Manager's View</h1>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Review and approve expense requests from your team.</p>
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-[30px]">Manager's View</h1>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-300 sm:text-sm">Review and approve expense requests from your team.</p>
             </div>
             <div className="flex gap-2">
               <span className="flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">
@@ -106,29 +106,33 @@ export function ManagerDashboardPage() {
         </Card>
 
         {/* Tab Navigation */}
-        <div className="inline-flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
-          <button
-            type="button"
-            onClick={() => setActiveTab("review")}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-              activeTab === "review"
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50"
-            }`}
-          >
-            📋 Review
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("processed")}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-              activeTab === "processed"
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50"
-            }`}
-          >
-            ✓ Processed
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
+            <button
+              type="button"
+              onClick={() => setActiveTab("review")}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                activeTab === "review"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50"
+              }`}
+            >
+              Review
+            </button>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
+            <button
+              type="button"
+              onClick={() => setActiveTab("processed")}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                activeTab === "processed"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50"
+              }`}
+            >
+              Processed
+            </button>
+          </div>
         </div>
 
         {/* Approvals to Review Tab */}
@@ -143,15 +147,15 @@ export function ManagerDashboardPage() {
               </div>
             ) : (
               <div className="hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[1000px] text-left">
+                <table className="w-full table-fixed text-left">
                   <thead>
-                    <tr className="border-b border-slate-200 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-400">
-                      <th className="px-3 py-2 font-medium text-left">Subject</th>
-                      <th className="px-3 py-2 font-medium text-left">Owner</th>
-                      <th className="px-3 py-2 font-medium text-left">Category</th>
-                      <th className="px-3 py-2 font-medium text-left">Status</th>
-                      <th className="px-3 py-2 font-medium text-left">Amount</th>
-                      <th className="px-3 py-2 font-medium text-left">Actions</th>
+                    <tr className="border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                      <th className="px-3 py-2 font-semibold text-left">Subject</th>
+                      <th className="px-3 py-2 font-semibold text-left">Owner</th>
+                      <th className="px-3 py-2 font-semibold text-left">Category</th>
+                      <th className="px-3 py-2 font-semibold text-left">Status</th>
+                      <th className="px-3 py-2 font-semibold text-left">Amount</th>
+                      <th className="w-24 px-3 py-2 font-semibold text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -181,18 +185,18 @@ export function ManagerDashboardPage() {
                           </span>
                         </td>
                         <td className="px-3 py-2">
-                          <div className="flex gap-1">
+                          <div className="flex items-center justify-center gap-0.5">
                             <Button
                               type="button"
                               onClick={() => handleApprove(approval.id)}
-                              className="bg-green-600 px-0.5 py-0.5 text-[10px] leading-none hover:bg-green-700"
+                              className="!w-auto h-6 min-w-6 rounded-md bg-green-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none shadow-none hover:bg-green-700"
                             >
                               ✓
                             </Button>
                             <Button
                               type="button"
                               onClick={() => handleReject(approval.id)}
-                              className="bg-red-600 px-0.1 py-0.5 text-[10px] leading-none hover:bg-red-700"
+                              className="!w-auto h-6 min-w-6 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none shadow-none hover:bg-red-700"
                             >
                               ✕
                             </Button>
@@ -251,11 +255,11 @@ export function ManagerDashboardPage() {
                       <Button
                         type="button"
                         onClick={() => handleApprove(approval.id)}
-                        className="flex-1 bg-green-600 px-1.5 py-0.5 text-[10px] leading-none hover:bg-green-700"
+                        className="h-7 flex-1 bg-green-600 px-1.5 py-0.5 text-[10px] leading-none shadow-none hover:bg-green-700"
                       >
                         ✓
                       </Button>
-                      <Button type="button" onClick={() => handleReject(approval.id)} className="flex-1 bg-red-600 px-1.5 py-0.5 text-[10px] leading-none hover:bg-red-700">
+                      <Button type="button" onClick={() => handleReject(approval.id)} className="h-7 flex-1 bg-red-600 px-1.5 py-0.5 text-[10px] leading-none shadow-none hover:bg-red-700">
                         ✕
                       </Button>
                     </div>
@@ -303,12 +307,12 @@ export function ManagerDashboardPage() {
                 <div className="hidden overflow-x-auto md:block">
                   <table className="w-full min-w-[1000px] text-left">
                     <thead>
-                      <tr className="border-b border-slate-200 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-400">
-                        <th className="px-3 py-2 font-medium text-left">Subject</th>
-                        <th className="px-3 py-2 font-medium text-left">Owner</th>
-                        <th className="px-3 py-2 font-medium text-left">Category</th>
-                        <th className="px-3 py-2 font-medium text-left">Status</th>
-                        <th className="px-3 py-2 font-medium text-left">Amount</th>
+                      <tr className="border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                        <th className="px-3 py-2 font-semibold text-left">Subject</th>
+                        <th className="px-3 py-2 font-semibold text-left">Owner</th>
+                        <th className="px-3 py-2 font-semibold text-left">Category</th>
+                        <th className="px-3 py-2 font-semibold text-left">Status</th>
+                        <th className="px-3 py-2 font-semibold text-left">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -370,8 +374,8 @@ export function ManagerDashboardPage() {
         )}
 
         {/* Info Box */}
-        <div className="rounded-lg border-2 border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-900/30 dark:bg-indigo-950/20">
-          <p className="text-sm text-indigo-900 dark:text-indigo-200">
+        <div className="rounded-lg border border-indigo-200 bg-indigo-50/70 p-3 dark:border-indigo-900/30 dark:bg-indigo-950/20">
+          <p className="text-xs text-indigo-900 dark:text-indigo-200 sm:text-sm">
             <span className="font-semibold">Note:</span> Once an expense is approved/rejected, the record becomes read-only. The status in the request status field and the action buttons become invisible.
           </p>
         </div>

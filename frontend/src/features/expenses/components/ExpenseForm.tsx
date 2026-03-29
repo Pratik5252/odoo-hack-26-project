@@ -188,8 +188,9 @@ export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
             type="button"
             onClick={onCancel}
             className="!w-auto rounded px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            aria-label="Close form"
           >
-            Cancel
+            ✕
           </button>
           <Button type="submit" className="!w-auto h-8 px-3 py-1 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 shadow-none" isLoading={isSubmitting}>
             Submit
