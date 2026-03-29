@@ -71,29 +71,39 @@ export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
   };
 
   return (
-    <Card title="New Expense">
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-        <div className="flex items-center justify-between gap-2 text-[11px]">
-          <span className="rounded-full bg-indigo-100 px-2 py-1 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">Draft</span>
-          <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">Waiting Approval</span>
-          <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200">Approved</span>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+    <Card className="max-w-none border-0 bg-transparent shadow-none">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="employee">Employee</Label>
-          <Input id="employee" value={formState.employee} onChange={(e) => setFormState((p) => ({ ...p, employee: e.target.value }))} error={errors.employee} />
+          <Label htmlFor="employee">
+            Employee <span className="text-rose-500">*</span>
+          </Label>
+          <Input
+            id="employee"
+            placeholder="Enter employee name"
+            value={formState.employee}
+            onChange={(e) => setFormState((p) => ({ ...p, employee: e.target.value }))}
+            error={errors.employee}
+          />
         </div>
 
         <div>
-          <Label htmlFor="description">Description</Label>
-          <Input id="description" value={formState.description} onChange={(e) => setFormState((p) => ({ ...p, description: e.target.value }))} error={errors.description} />
+          <Label htmlFor="description">
+            Description <span className="text-rose-500">*</span>
+          </Label>
+          <Input
+            id="description"
+            placeholder="What was this expense for?"
+            value={formState.description}
+            onChange={(e) => setFormState((p) => ({ ...p, description: e.target.value }))}
+            error={errors.description}
+          />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">
+              Category <span className="text-rose-500">*</span>
+            </Label>
             <Select id="category" value={formState.category} onChange={(e) => setFormState((p) => ({ ...p, category: e.target.value }))}>
               <option value="">Select category</option>
               {categories.map((cat) => (
@@ -104,12 +114,22 @@ export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
           </div>
 
           <div>
-            <Label htmlFor="date">Expense Date</Label>
-            <Input id="date" type="date" value={formState.date} onChange={(e) => setFormState((p) => ({ ...p, date: e.target.value }))} error={errors.date} />
+            <Label htmlFor="date">
+              Expense Date <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              id="date"
+              type="date"
+              value={formState.date}
+              onChange={(e) => setFormState((p) => ({ ...p, date: e.target.value }))}
+              error={errors.date}
+            />
           </div>
 
           <div>
-            <Label htmlFor="paidBy">Paid By</Label>
+            <Label htmlFor="paidBy">
+              Paid By <span className="text-rose-500">*</span>
+            </Label>
             <Select id="paidBy" value={formState.paidBy} onChange={(e) => setFormState((p) => ({ ...p, paidBy: e.target.value }))}>
               <option value="">Select name</option>
               {paidByList.map((item) => (
@@ -120,9 +140,19 @@ export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
           </div>
 
           <div>
-            <Label htmlFor="total">Total Amount</Label>
+            <Label htmlFor="total">
+              Total Amount <span className="text-rose-500">*</span>
+            </Label>
             <div className="flex gap-2">
-              <Input id="total" type="number" min={0} value={formState.amount} onChange={(e) => setFormState((p) => ({ ...p, amount: e.target.value }))} error={errors.amount} />
+              <Input
+                id="total"
+                type="number"
+                min={0}
+                placeholder="0"
+                value={formState.amount}
+                onChange={(e) => setFormState((p) => ({ ...p, amount: e.target.value }))}
+                error={errors.amount}
+              />
               <Select id="currency" value={formState.currency} onChange={(e) => setFormState((p) => ({ ...p, currency: e.target.value }))}>
                 {currencies.map((cur) => (<option key={cur} value={cur}>{cur}</option>))}
               </Select>
@@ -133,7 +163,12 @@ export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
 
         <div>
           <Label htmlFor="remarks">Remarks</Label>
-          <Input id="remarks" value={formState.remarks} onChange={(e) => setFormState((p) => ({ ...p, remarks: e.target.value }))} />
+          <Input
+            id="remarks"
+            placeholder="Any additional notes (optional)"
+            value={formState.remarks}
+            onChange={(e) => setFormState((p) => ({ ...p, remarks: e.target.value }))}
+          />
         </div>
 
         <div>
@@ -143,16 +178,22 @@ export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
             type="file"
             accept="image/*,application/pdf"
             onChange={(e) => setFormState((p) => ({ ...p, receipt: e.target.files ? e.target.files[0] : null }))}
-            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 file:mr-3 file:rounded file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:file:bg-indigo-900/20 dark:file:text-indigo-200"
           />
           {formState.receipt ? <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">File: {formState.receipt.name}</p> : null}
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <button type="button" onClick={onCancel} className="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
-            Back
+        <div className="flex items-center justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="!w-auto rounded px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Cancel
           </button>
-          <Button type="submit" isLoading={isSubmitting}>Submit</Button>
+          <Button type="submit" className="!w-auto h-8 px-3 py-1 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 shadow-none" isLoading={isSubmitting}>
+            Submit
+          </Button>
         </div>
       </form>
     </Card>
