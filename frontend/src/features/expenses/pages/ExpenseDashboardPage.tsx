@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
+import { LogoutButton } from "../../../components/layout/LogoutButton";
 import { Dialog } from "../../../components/ui/dialog";
 import { ExpenseTable } from "../components/ExpenseTable";
 import { ExpenseForm } from "../components/ExpenseForm";
@@ -52,9 +53,12 @@ export function ExpenseDashboardPage() {
               <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">My Expenses</h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Create, track, and manage your expense reports.</p>
             </div>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              Expense Dashboard
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                Expense Dashboard
+              </span>
+              <LogoutButton />
+            </div>
           </div>
         </Card>
 

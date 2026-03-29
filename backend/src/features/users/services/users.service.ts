@@ -1,4 +1,13 @@
 import { prisma } from '../../../lib/prisma';
+import { hashPassword } from '../../../utils/password';
+
+/** Strict company match (admin dashboard lists only users in the same company). */
+function companyScopeStrict(companyId: string | null) {
+  if (!companyId) {
+    return { companyId: null };
+  }
+  return { companyId };
+}
 
 export interface CreateUserInput {
   email: string;
@@ -6,6 +15,7 @@ export interface CreateUserInput {
   password: string;
   role: 'EMPLOYEE' | 'MANAGER' | 'ADMIN';
   managerId?: string | null;
+  companyId: string;
 }
 
 export interface UpdateUserInput {
@@ -17,13 +27,15 @@ export interface UpdateUserInput {
 
 export class UserService {
   async createUser(input: CreateUserInput) {
+    const hashedPassword = await hashPassword(input.password);
     return prisma.user.create({
       data: {
-        email: input.email,
-        name: input.name,
-        password: input.password,
+        email: input.email.trim().toLowerCase(),
+        name: input.name.trim(),
+        password: hashedPassword,
         role: input.role,
-        managerId: input.managerId,
+        managerId: input.managerId ?? null,
+        companyId: input.companyId,
       },
       select: {
         id: true,
@@ -31,8 +43,19 @@ export class UserService {
         name: true,
         role: true,
         managerId: true,
-        createdAt: true,
       },
+    });
+  }
+
+  /** Verify a manager belongs to the same company (for employee assignment). */
+  async findManagerInCompany(managerId: string, companyId: string) {
+    return prisma.user.findFirst({
+      where: {
+        id: managerId,
+        role: 'MANAGER',
+        companyId,
+      },
+      select: { id: true },
     });
   }
 
@@ -76,6 +99,40 @@ export class UserService {
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /** Managers in the same company as the admin. */
+  async getManagersByCompany(companyId: string | null) {
+    return prisma.user.findMany({
+      where: {
+        role: 'MANAGER',
+        ...companyScopeStrict(companyId),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+      orderBy: [{ name: 'asc' }, { email: 'asc' }],
+    });
+  }
+
+  /** Employees and managers for the admin dashboard (excludes ADMIN), same company only. */
+  async getTeamEmployeesAndManagers(companyId: string | null) {
+    return prisma.user.findMany({
+      where: {
+        role: { in: ['EMPLOYEE', 'MANAGER'] },
+        ...companyScopeStrict(companyId),
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        managerId: true,
+      },
+      orderBy: [{ name: 'asc' }, { email: 'asc' }],
     });
   }
 

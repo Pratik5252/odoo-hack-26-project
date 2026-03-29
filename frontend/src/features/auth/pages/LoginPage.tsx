@@ -5,14 +5,16 @@ import { Card } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import { Label } from "../../../components/ui/label";
-import { login } from "../services/authService";
 import { useAuthForm } from "../hooks/useAuthForm";
+import { useAuth } from "../context/AuthContext";
+import { getDefaultRouteForRole } from "../roleRoutes";
 
 export function LoginPage() {
   const { formState, updateField } = useAuthForm({ name: "", email: "", password: "", confirmPassword: "", country: "" });
   const [errors, setErrors] = useState<{ email?: string; password?: string; global?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const validate = () => {
     const nextErrors: typeof errors = {};
@@ -33,9 +35,8 @@ export function LoginPage() {
     setErrors({});
 
     try {
-      const resp = await login({ email: formState.email, password: formState.password });
-      console.log("Logged in as", resp.user);
-      navigate("/", { replace: true });
+      const session = await login({ email: formState.email, password: formState.password });
+      navigate(getDefaultRouteForRole(session.user.role), { replace: true });
     } catch (error) {
       setErrors({ global: (error as Error).message });
     } finally {
