@@ -1,11 +1,14 @@
 import type { ExpenseItem } from "../data/mockExpenses";
 import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
 
 interface ExpenseTableProps {
   expenses: ExpenseItem[];
+  onSubmit?: (expenseId: string) => Promise<void>;
+  submittingId?: string | null;
 }
 
-export function ExpenseTable({ expenses }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, onSubmit, submittingId }: ExpenseTableProps) {
   if (expenses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-200 py-12 dark:border-slate-700">
@@ -28,6 +31,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
               <th className="px-3 py-2 font-medium text-left">Category</th>
               <th className="px-3 py-2 font-medium text-left">Amount</th>
               <th className="px-3 py-2 font-medium text-left">Status</th>
+              <th className="px-3 py-2 font-medium text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -54,6 +58,19 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                 </td>
                 <td className="px-3 py-2">
                   <Badge status={expense.status} />
+                </td>
+                <td className="px-3 py-2">
+                  {expense.status === "Draft" && onSubmit ? (
+                    <Button
+                      onClick={() => onSubmit(expense.id)}
+                      disabled={submittingId === expense.id}
+                      className="h-6 px-2 text-xs"
+                    >
+                      {submittingId === expense.id ? "Submitting..." : "Submit"}
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-slate-500">-</span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -86,6 +103,17 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                 <p className="font-semibold text-slate-900 dark:text-slate-100">{expense.currency} {expense.amount.toLocaleString()}</p>
               </div>
             </div>
+            {expense.status === "Draft" && onSubmit && (
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                <Button
+                  onClick={() => onSubmit(expense.id)}
+                  disabled={submittingId === expense.id}
+                  className="w-full h-8 text-xs"
+                >
+                  {submittingId === expense.id ? "Submitting..." : "Submit Expense"}
+                </Button>
+              </div>
+            )}
           </div>
         ))}
       </div>

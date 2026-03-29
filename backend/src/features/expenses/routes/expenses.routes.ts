@@ -29,6 +29,12 @@ router.post('/', authMiddleware, expenseController.createExpense.bind(expenseCon
 
 // 4. MUST BE LAST! Param-based routes
 router.get('/:id', expenseController.getExpenseById.bind(expenseController));
+router.put('/:id/:action', authMiddleware, (req: Request, res: Response) => {
+  if (req.params.action === 'submit') {
+    return expenseController.submitExpense(req, res);
+  }
+  return expenseController.updateExpense(req, res);
+});
 router.put('/:id', authMiddleware, expenseController.updateExpense.bind(expenseController));
 router.delete('/:id', authMiddleware, expenseController.deleteExpense.bind(expenseController));
 

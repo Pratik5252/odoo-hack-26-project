@@ -141,3 +141,27 @@ export async function deleteExpense(
     throw new Error(error.error || "Failed to delete expense");
   }
 }
+
+/**
+ * Submit an expense (change status from DRAFT to PENDING)
+ */
+export async function submitExpense(
+  accessToken: string,
+  expenseId: string
+): Promise<DbExpense> {
+  const res = await fetch(`${getApiBaseUrl()}/expenses/${expenseId}/submit`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Failed to submit expense");
+  }
+
+  const data = await res.json();
+  return data.data;
+}

@@ -157,6 +157,40 @@ export class ExpenseController {
       res.status(500).json({ success: false, error: error.message });
     }
   }
+
+  async submitExpense(req: Request, res: Response) {
+    try {
+      const expenseId = req.params.id as string;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Not authenticated' });
+      }
+
+      // Get the expense to verify it belongs to the user and is in DRAFT status
+      const expense = await expenseService.getExpenseById(expenseId);
+      if (!expense) {
+        return res.status(404).json({ success: false, error: 'Expense not found' });
+      }
+
+      if (expense.userId !== userId) {
+        return res.status(403).json({ success: false, error: 'You can only submit your own expenses' });
+      }
+
+      if (expense.status !== 'DRAFT') {
+        return res.status(400).json({ success: false, error: `Cannot submit expense that is not in DRAFT status. Current status: ${expense.status}` });
+      }
+
+      // Update status to PENDING
+      const updatedExpense = await expenseService.updateExpense(expenseId, {
+        status: 'PENDING',
+      });
+
+      res.json({ success: true, data: updatedExpense, message: 'Expense submitted for approval' });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
 }
 
 export const expenseController = new ExpenseController();

@@ -6,7 +6,7 @@ import { Dialog } from "../../../components/ui/dialog";
 import { ExpenseTable } from "../components/ExpenseTable";
 import { ExpenseForm } from "../components/ExpenseForm";
 import { useAuth } from "../../auth/context/AuthContext";
-import { fetchMyExpenses, type DbExpense } from "../services/expenseApi";
+import { fetchMyExpenses, submitExpense, type DbExpense } from "../services/expenseApi";
 
 export type ExpenseStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
 
@@ -63,6 +63,7 @@ export function ExpenseDashboardPage() {
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFormDialog, setShowFormDialog] = useState(false);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch expenses on mount
@@ -100,6 +101,32 @@ export function ExpenseDashboardPage() {
   const addExpense = (expense: ExpenseItem) => {
     setExpenses((prev) => [expense, ...prev]);
     setShowFormDialog(false);
+  };
+
+  const handleSubmitExpense = async (expenseId: string) => {
+    if (!accessToken) return;
+
+    try {
+      setSubmittingId(expenseId);
+      const submittedExpense = await submitExpense(accessToken, expenseId);
+      
+      // Update the expense in the list
+      setExpenses((prev) =>
+        prev.map((exp) =>
+          exp.id === expenseId
+            ? { ...exp, status: mapStatus(submittedExpense.status as ExpenseStatus) }
+            : exp
+        )
+      );
+      
+      console.log("[ExpenseDashboard] Expense submitted successfully:", submittedExpense);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error("[ExpenseDashboard] Failed to submit expense:", errorMsg);
+      alert(`Failed to submit expense: ${errorMsg}`);
+    } finally {
+      setSubmittingId(null);
+    }
   };
 
   const closeFormDialog = () => setShowFormDialog(false);
@@ -209,7 +236,7 @@ export function ExpenseDashboardPage() {
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">Click "+ New Expense" above to add your first expense.</p>
                   </div>
                 ) : (
-                  <ExpenseTable expenses={expenses} />
+                  <ExpenseTable expenses={expenses} onSubmit={handleSubmitExpense} submittingId={submittingId} />
                 )}
               </Card>
             </div>
