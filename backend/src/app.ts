@@ -1,5 +1,6 @@
-import express, { Express } from 'express';
-import routes from './routes';
+import express, { Express } from "express";
+import routes from "./routes";
+import { errorMiddleware } from "./middleware/errorMiddleware";
 
 const app: Express = express();
 
@@ -8,12 +9,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/', routes);
+app.use("/", routes);
 
-// Error handling middleware
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+// Error handling middleware (must be last)
+app.use(errorMiddleware);
 
 export default app;
