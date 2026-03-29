@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { LogoutButton } from "../../../components/layout/LogoutButton";
 import { Card } from "../../../components/ui/card";
 import { Label } from "../../../components/ui/label";
+import { useAuth } from "../../auth/context/AuthContext";
+import { fetchTeamExpenses, updateExpenseStatus, type Expense } from "../services/managerApi";
 
-type ApprovalStatus = "pending" | "approved" | "rejected";
+type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 type TabType = "review" | "processed";
-type FilterStatus = "all" | "approved" | "rejected";
+type FilterStatus = "all" | "APPROVED" | "REJECTED";
 
 interface ApprovalRequest {
   id: string;
@@ -18,65 +20,107 @@ interface ApprovalRequest {
   currency: string;
 }
 
-const INITIAL_APPROVALS: ApprovalRequest[] = [
-  {
-    id: "approval-1",
-    approvalSubject: "none",
-    requestOwner: "Sarah",
-    category: "Food",
-    requestStatus: "pending",
-    totalAmount: 49396,
-    currency: "₹",
-  },
-  {
-    id: "approval-2",
-    approvalSubject: "Travel Reimbursement",
-    requestOwner: "John",
-    category: "Travel",
-    requestStatus: "pending",
-    totalAmount: 25000,
-    currency: "₹",
-  },
-  {
-    id: "approval-3",
-    approvalSubject: "Office Supplies",
-    requestOwner: "Alex",
-    category: "Supplies",
-    requestStatus: "pending",
-    totalAmount: 5500,
-    currency: "₹",
-  },
-];
-
 const STATUS_COLORS = {
-  pending: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-200 dark:border-amber-900/30",
-  approved: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-200 dark:border-green-900/30",
-  rejected: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-200 dark:border-red-900/30",
+  PENDING: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-200 dark:border-amber-900/30",
+  APPROVED: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-200 dark:border-green-900/30",
+  REJECTED: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-200 dark:border-red-900/30",
 };
 
+function mapExpenseToApprovalRequest(expense: Expense): ApprovalRequest {
+  return {
+    id: expense.id,
+    approvalSubject: expense.description || "No description",
+    requestOwner: expense.user.name || expense.user.email,
+    category: expense.category,
+    requestStatus: (expense.status as ApprovalStatus) || "PENDING",
+    totalAmount: expense.amount,
+    currency: "₹",
+  };
+}
+
 export function ManagerDashboardPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("processed");
+  const { accessToken } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>("review");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
-  const [approvals, setApprovals] = useState<ApprovalRequest[]>(INITIAL_APPROVALS);
+  const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const handleApprove = (id: string) => {
-    setApprovals((prev) =>
-      prev.map((approval) =>
-        approval.id === id ? { ...approval, requestStatus: "approved" as ApprovalStatus } : approval
-      )
-    );
+  // Fetch team expenses on mount
+  useEffect(() => {
+    if (!accessToken) {
+      setError("Not authenticated");
+      setLoading(false);
+      return;
+    }
+
+    const loadExpenses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const expenses = await fetchTeamExpenses(accessToken);
+        const approvalRequests = expenses.map(mapExpenseToApprovalRequest);
+        setApprovals(approvalRequests);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load expenses");
+        setApprovals([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadExpenses();
+  }, [accessToken]);
+
+  const handleApprove = async (id: string) => {
+    setUpdatingId(id);
+    try {
+      if (!accessToken) throw new Error("Not authenticated");
+      
+      // Update on server
+      await updateExpenseStatus(accessToken, id, "APPROVED");
+      
+      // Update UI
+      setApprovals(
+        approvals.map((approval) =>
+          approval.id === id
+            ? { ...approval, requestStatus: "APPROVED" as ApprovalStatus }
+            : approval
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to approve expense");
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
-  const handleReject = (id: string) => {
-    setApprovals((prev) =>
-      prev.map((approval) =>
-        approval.id === id ? { ...approval, requestStatus: "rejected" as ApprovalStatus } : approval
-      )
-    );
+  const handleReject = async (id: string) => {
+    setUpdatingId(id);
+    try {
+      if (!accessToken) throw new Error("Not authenticated");
+      
+      // Update on server
+      await updateExpenseStatus(accessToken, id, "REJECTED");
+      
+      // Update UI
+      setApprovals(
+        approvals.map((approval) =>
+          approval.id === id
+            ? { ...approval, requestStatus: "REJECTED" as ApprovalStatus }
+            : approval
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reject expense");
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
-  const pendingApprovals = approvals.filter((a) => a.requestStatus === "pending");
-  const processedApprovals = approvals.filter((a) => a.requestStatus !== "pending");
+  const pendingApprovals = approvals.filter((a) => a.requestStatus === "PENDING");
+  const processedApprovals = approvals.filter((a) => a.requestStatus !== "PENDING");
 
   const getFilteredProcessedApprovals = () => {
     if (filterStatus === "all") return processedApprovals;
@@ -106,6 +150,38 @@ export function ManagerDashboardPage() {
             </div>
           </div>
         </Card>
+
+        {/* Loading State */}
+        {loading && (
+          <Card className="max-w-none">
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-indigo-600 dark:border-slate-600 dark:border-t-indigo-400"></div>
+              <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">Loading team expenses...</p>
+            </div>
+          </Card>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <Card className="max-w-none border-red-200 bg-red-50 dark:border-red-900/30 dark:bg-red-950/20">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex-shrink-0">
+                <p className="text-sm font-semibold text-red-700 dark:text-red-200">Error loading expenses</p>
+              </div>
+              <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
+            </div>
+          </Card>
+        )}
+
+        {/* Empty State when no data */}
+        {!loading && !error && approvals.length === 0 && (
+          <Card className="max-w-none">
+            <div className="flex flex-col items-center justify-center py-12">
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">No expenses yet</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Team members will appear here once they create expenses.</p>
+            </div>
+          </Card>
+        )}
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap items-center gap-2">
@@ -191,16 +267,18 @@ export function ManagerDashboardPage() {
                             <Button
                               type="button"
                               onClick={() => handleApprove(approval.id)}
-                              className="!w-auto h-6 min-w-6 rounded-md bg-green-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none shadow-none hover:bg-green-700"
+                              disabled={updatingId === approval.id}
+                              className="!w-auto h-6 min-w-6 rounded-md bg-green-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none shadow-none hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              ✓
+                              {updatingId === approval.id ? "..." : "✓"}
                             </Button>
                             <Button
                               type="button"
                               onClick={() => handleReject(approval.id)}
-                              className="!w-auto h-6 min-w-6 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none shadow-none hover:bg-red-700"
+                              disabled={updatingId === approval.id}
+                              className="!w-auto h-6 min-w-6 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none shadow-none hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              ✕
+                              {updatingId === approval.id ? "..." : "✕"}
                             </Button>
                           </div>
                         </td>
@@ -257,12 +335,18 @@ export function ManagerDashboardPage() {
                       <Button
                         type="button"
                         onClick={() => handleApprove(approval.id)}
-                        className="h-7 flex-1 bg-green-600 px-1.5 py-0.5 text-[10px] leading-none shadow-none hover:bg-green-700"
+                        disabled={updatingId === approval.id}
+                        className="h-7 flex-1 bg-green-600 px-1.5 py-0.5 text-[10px] leading-none shadow-none hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        ✓
+                        {updatingId === approval.id ? "..." : "✓"}
                       </Button>
-                      <Button type="button" onClick={() => handleReject(approval.id)} className="h-7 flex-1 bg-red-600 px-1.5 py-0.5 text-[10px] leading-none shadow-none hover:bg-red-700">
-                        ✕
+                      <Button 
+                        type="button" 
+                        onClick={() => handleReject(approval.id)} 
+                        disabled={updatingId === approval.id}
+                        className="h-7 flex-1 bg-red-600 px-1.5 py-0.5 text-[10px] leading-none shadow-none hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {updatingId === approval.id ? "..." : "✕"}
                       </Button>
                     </div>
                   </div>
@@ -288,8 +372,8 @@ export function ManagerDashboardPage() {
                 className="w-auto rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               >
                 <option value="all">All</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
               </select>
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 ({getFilteredProcessedApprovals().length})

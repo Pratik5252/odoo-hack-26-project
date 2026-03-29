@@ -4,6 +4,14 @@ import { expenseService } from '../services/expenses.service';
 export class ExpenseController {
   async getAllExpenses(req: Request, res: Response) {
     try {
+      // GUARD: Authenticated users MUST use /me endpoint
+      if (req.user?.userId) {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Authenticated users must use /expenses/me to get their expenses' 
+        });
+      }
+
       const expenses = await expenseService.getAllExpenses();
       res.json({ success: true, data: expenses });
     } catch (error: any) {
@@ -15,11 +23,11 @@ export class ExpenseController {
     try {
       const id = req.params.id as string;
       const expense = await expenseService.getExpenseById(id);
-      
+
       if (!expense) {
         return res.status(404).json({ success: false, error: 'Expense not found' });
       }
-      
+
       res.json({ success: true, data: expense });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -38,12 +46,23 @@ export class ExpenseController {
 
   async createExpense(req: Request, res: Response) {
     try {
-      const { userId, amount, category, description, receiptUrl } = req.body;
+      // Get userId from auth token (from middleware)
+      const authUserId = req.user?.userId;
+      const bodyUserId = req.body.userId;
+      const userId = authUserId || bodyUserId;
       
-      if (!userId || !amount || !category) {
+      if (!userId) {
         return res.status(400).json({ 
           success: false, 
-          error: 'userId, amount, and category are required' 
+          error: 'userId is required (via auth token or body)' 
+        });
+      }
+      
+      const { amount, category, description, receiptUrl } = req.body;
+      if (!amount || !category) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'amount and category are required' 
         });
       }
       
@@ -113,6 +132,28 @@ export class ExpenseController {
       const expenses = await expenseService.getExpensesByStatus(status as 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED');
       res.json({ success: true, data: expenses });
     } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  async getMyExpenses(req: Request, res: Response) {
+    try {
+      const userId = req.user?.userId;
+      console.log(`\n${'='.repeat(60)}`);
+      console.log(`[EXPENSES /me] GET /expenses/me called`);
+      console.log(`  - Auth Present: ${req.user ? 'YES' : 'NO'}`);
+      console.log(`  - userId: ${userId || 'NONE'}`);
+      console.log(`${'='.repeat(60)}\n`);
+
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Not authenticated' });
+      }
+
+      const expenses = await expenseService.getExpensesByUserId(userId);
+      console.log(`✅ Found ${expenses.length} expenses for user ${userId}\n`);
+      res.json({ success: true, data: expenses });
+    } catch (error: any) {
+      console.error(`❌ Error in /me:`, error.message);
       res.status(500).json({ success: false, error: error.message });
     }
   }

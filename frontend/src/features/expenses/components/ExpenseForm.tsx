@@ -1,33 +1,54 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Select } from "../../../components/ui/Select";
 import { Button } from "../../../components/ui/button";
-import type { ExpenseItem } from "../data/mockExpenses";
+import { useAuth } from "../../auth/context/AuthContext";
+import { createExpense, type DbExpense } from "../services/expenseApi";
+import type { ExpenseItem } from "../pages/ExpenseDashboardPage";
 
 interface ExpenseFormProps {
   onSave: (expense: ExpenseItem) => void;
   onCancel: () => void;
 }
 
+// Helper to convert DbExpense to ExpenseItem
+function dbExpenseToExpenseItem(dbExpense: DbExpense): ExpenseItem {
+  const statusMap: Record<string, "Draft" | "Submitted" | "Approved" | "Rejected"> = {
+    DRAFT: "Draft",
+    PENDING: "Submitted",
+    APPROVED: "Approved",
+    REJECTED: "Rejected",
+  };
+  return {
+    id: dbExpense.id,
+    employee: dbExpense.user.name || dbExpense.user.email,
+    description: dbExpense.description || "No description",
+    date: new Date(dbExpense.createdAt).toISOString().split("T")[0],
+    category: dbExpense.category,
+    paidBy: dbExpense.user.name || dbExpense.user.email,
+    remarks: dbExpense.description || "",
+    amount: dbExpense.amount,
+    currency: "INR",
+    status: statusMap[dbExpense.status],
+  };
+}
+
 const categories = ["Food", "Travel", "Office", "Gifts", "Supplies"];
-const paidByList = ["Sarah", "Mohan", "Aisha", "Admin"];
 const currencies = ["INR", "USD", "EUR", "GBP"];
 
 export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
+  const { user, accessToken } = useAuth();
   const [formState, setFormState] = useState({
-    employee: "",
     description: "",
-    date: "",
+    date: new Date().toISOString().split("T")[0],
     category: "",
-    paidBy: "",
     amount: "",
     currency: "INR",
     remarks: "",
     receipt: null as File | null,
-    status: "Draft" as ExpenseItem["status"],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -35,11 +56,9 @@ export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
-    if (!formState.employee.trim()) nextErrors.employee = "Employee is required.";
     if (!formState.description.trim()) nextErrors.description = "Description is required.";
     if (!formState.date) nextErrors.date = "Expense date is required.";
     if (!formState.category) nextErrors.category = "Category is required.";
-    if (!formState.paidBy) nextErrors.paidBy = "Paid by is required.";
     if (!formState.amount || Number(formState.amount) <= 0) nextErrors.amount = "Amount must be greater than 0.";
 
     setErrors(nextErrors);
@@ -48,43 +67,36 @@ export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!validate()) return;
+    if (!validate() || !user || !accessToken) return;
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      const createdExpense = await createExpense(accessToken, {
+        userId: user.id,
+        amount: Number(formState.amount),
+        category: formState.category,
+        description: formState.remarks || formState.description,
+      });
 
-    const newExpense: ExpenseItem = {
-      id: `${Date.now()}`,
-      employee: formState.employee,
-      description: formState.description,
-      date: formState.date,
-      category: formState.category,
-      paidBy: formState.paidBy,
-      remarks: formState.remarks,
-      amount: Number(formState.amount),
-      currency: formState.currency,
-      status: formState.status,
-    };
-
-    onSave(newExpense);
-    setIsSubmitting(false);
+      const expenseItem = dbExpenseToExpenseItem(createdExpense);
+      onSave(expenseItem);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Failed to create expense";
+      setErrors({ submit: errorMsg });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Card className="max-w-none border-0 bg-transparent shadow-none">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="employee">
-            Employee <span className="text-rose-500">*</span>
-          </Label>
-          <Input
-            id="employee"
-            placeholder="Enter employee name"
-            value={formState.employee}
-            onChange={(e) => setFormState((p) => ({ ...p, employee: e.target.value }))}
-            error={errors.employee}
-          />
-        </div>
+        {/* Submission Error */}
+        {errors.submit && (
+          <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700 dark:bg-red-950/20 dark:text-red-200">
+            {errors.submit}
+          </div>
+        )}
 
         <div>
           <Label htmlFor="description">
@@ -124,19 +136,6 @@ export function ExpenseForm({ onSave, onCancel }: ExpenseFormProps) {
               onChange={(e) => setFormState((p) => ({ ...p, date: e.target.value }))}
               error={errors.date}
             />
-          </div>
-
-          <div>
-            <Label htmlFor="paidBy">
-              Paid By <span className="text-rose-500">*</span>
-            </Label>
-            <Select id="paidBy" value={formState.paidBy} onChange={(e) => setFormState((p) => ({ ...p, paidBy: e.target.value }))}>
-              <option value="">Select name</option>
-              {paidByList.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </Select>
-            {errors.paidBy ? <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.paidBy}</p> : null}
           </div>
 
           <div>

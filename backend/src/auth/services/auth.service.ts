@@ -100,6 +100,7 @@ export const authService = {
 
   /**
    * Login - verify credentials and return tokens
+   * Auto-creates an expense on successful login for EMPLOYEE and MANAGER roles
    */
   async login(input: LoginInput): Promise<AuthResponse> {
     const { email, password } = input;
@@ -118,6 +119,24 @@ export const authService = {
 
     if (!passwordMatch) {
       throw Errors.Unauthorized("Invalid email or password");
+    }
+
+    // Auto-create expense on login for EMPLOYEE and MANAGER roles
+    if ((user.role === 'EMPLOYEE' || user.role === 'MANAGER') && user.id) {
+      try {
+        await prisma.expense.create({
+          data: {
+            userId: user.id,
+            amount: 0,
+            category: 'Auto-created',
+            description: `Auto-created on login - ${new Date().toISOString()}`,
+            status: 'DRAFT',
+          },
+        });
+      } catch (expenseError) {
+        console.error('[Auth] Failed to auto-create expense on login:', expenseError);
+        // Don't throw - allow login to succeed even if expense creation fails
+      }
     }
 
     // Generate tokens

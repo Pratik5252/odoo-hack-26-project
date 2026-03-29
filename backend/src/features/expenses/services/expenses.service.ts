@@ -50,7 +50,8 @@ export class ExpenseService {
   }
 
   async getExpensesByUserId(userId: string) {
-    return prisma.expense.findMany({
+    console.log(`  - [Service] Querying expenses for userId: ${userId}`);
+    const expenses = await prisma.expense.findMany({
       where: { userId },
       include: {
         user: {
@@ -64,6 +65,8 @@ export class ExpenseService {
       },
       orderBy: { createdAt: 'desc' },
     });
+    console.log(`  - [Service] Query returned ${expenses.length} expenses`);
+    return expenses;
   }
 
   async createExpense(input: CreateExpenseInput) {

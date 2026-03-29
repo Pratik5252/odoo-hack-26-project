@@ -83,6 +83,20 @@ export class ManagerController {
       res.status(500).json({ success: false, error: error.message });
     }
   }
+
+  async getTeamExpenses(req: Request, res: Response) {
+    try {
+      if (!req.user?.userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+
+      // Get expenses for the manager's team
+      const expenses = await managerService.getTeamExpenses(req.user.userId);
+      res.json({ success: true, data: expenses });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
 }
 
 export const managerController = new ManagerController();
