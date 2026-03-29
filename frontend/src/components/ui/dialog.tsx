@@ -5,9 +5,11 @@ interface DialogProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  /** Panel width; defaults to max-w-2xl */
+  panelClassName?: string;
 }
 
-export function Dialog({ isOpen, onClose, title, children }: DialogProps) {
+export function Dialog({ isOpen, onClose, title, children, panelClassName = "max-w-2xl" }: DialogProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -37,7 +39,9 @@ export function Dialog({ isOpen, onClose, title, children }: DialogProps) {
       />
 
       {/* Dialog */}
-      <div className="relative z-50 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900">
+      <div
+        className={`relative z-50 max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900 ${panelClassName}`}
+      >
         {/* Close Button */}
         <button
           onClick={onClose}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../../../components/ui/button";
+import { LogoutButton } from "../../../components/layout/LogoutButton";
 import { Card } from "../../../components/ui/card";
 import { Label } from "../../../components/ui/label";
 
@@ -92,7 +93,7 @@ export function ManagerDashboardPage() {
               <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-[30px]">Manager's View</h1>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-300 sm:text-sm">Review and approve expense requests from your team.</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">
                 <span className="h-2 w-2 rounded-full bg-amber-500"></span>
                 {pendingApprovals.length} Pending
@@ -101,6 +102,7 @@ export function ManagerDashboardPage() {
                 <span className="h-2 w-2 rounded-full bg-green-500"></span>
                 {processedApprovals.filter((a) => a.requestStatus === "approved").length} Approved
               </span>
+              <LogoutButton />
             </div>
           </div>
         </Card>

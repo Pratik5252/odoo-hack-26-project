@@ -18,19 +18,46 @@ enum Role {
   MANAGER
 }
 
+// ADDED
+enum ExpenseStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ADDED
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ADDED - Approval Rule Types
+enum ApprovalRuleType {
+  PERCENTAGE
+  SPECIFIC_APPROVER
+  HYBRID
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
+  password  String?
   managerId String?
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
   role      Role     @default(ADMIN)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   workflows Workflow[]
   approvals Approver[]
+  requiredApprovalRules ApprovalRule[] @relation("RequiredApprover")
+
+  // ADDED
+  expenses        Expense[]
+  expenseApprovals ExpenseApproval[]
 }
 
 model Company {
@@ -43,7 +70,6 @@ model Company {
   updatedAt DateTime @updatedAt
 
   users     User[]
-
 }
 
 model Workflow {
@@ -58,11 +84,13 @@ model Workflow {
   updatedAt DateTime @updatedAt
 
   approvers  Approver[]
+  approvalRule ApprovalRule?
 }
 
 model Approver {
   id         String   @id @default(uuid())
   isRequired Boolean  @default(false)
+  position   Int?     // Order for sequential approval (nullable for parallel)
 
   workflowId String
   workflow   Workflow @relation(fields: [workflowId], references: [id])
@@ -70,10 +98,71 @@ model Approver {
   approverId String
   approver   User     @relation(fields: [approverId], references: [id])
 
-
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@unique([workflowId, approverId])
+}
 
+// ADDED - Approval Rules for Workflows
+model ApprovalRule {
+  id                  String              @id @default(uuid())
+  
+  workflowId          String              @unique
+  workflow            Workflow            @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  ruleType            ApprovalRuleType    @default(HYBRID)
+  
+  // For PERCENTAGE rule: percentage threshold (e.g., 60)
+  percentageThreshold Int?                // 0-100
+  
+  // For SPECIFIC_APPROVER rule: required approver
+  requiredApproverId  String?
+  requiredApprover    User?               @relation("RequiredApprover", fields: [requiredApproverId], references: [id])
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+
+// =======================
+// ADDED MODELS BELOW
+// =======================
+
+// ADDED
+model Expense {
+  id          String        @id @default(uuid())
+  userId      String        // ADDED
+  user        User          @relation(fields: [userId], references: [id]) // ADDED
+
+  amount      Float         // ADDED
+  category    String        // ADDED
+  description String?       // ADDED
+  receiptUrl  String?       // ADDED
+
+  status      ExpenseStatus @default(DRAFT) // ADDED
+
+  createdAt   DateTime      @default(now()) // ADDED
+  updatedAt   DateTime      @updatedAt      // ADDED
+
+  approvals   ExpenseApproval[] // ADDED
+}
+
+// ADDED
+model ExpenseApproval {
+  id          String          @id @default(uuid())
+
+  expenseId   String          // ADDED
+  expense     Expense         @relation(fields: [expenseId], references: [id]) // ADDED
+
+  approverId  String          // ADDED
+  approver    User            @relation(fields: [approverId], references: [id]) // ADDED
+
+  status      ApprovalStatus  @default(PENDING) // ADDED
+  comment     String?         // ADDED
+  approvedAt  DateTime?       // ADDED
+
+  createdAt   DateTime        @default(now()) // ADDED
+
+  @@unique([expenseId, approverId]) // ADDED
 }

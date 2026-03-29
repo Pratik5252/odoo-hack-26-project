@@ -1,20 +1,28 @@
-import express, { Express } from 'express';
+import express, { Express } from "express";
+import routes from "./routes";
+import { errorMiddleware } from "./middleware/errorMiddleware";
+import cors from 'cors';
+import { adminRouter } from './routes/admin';
 
 const app: Express = express();
 
+const corsOrigins =
+  process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()).filter(Boolean) ?? [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+  ];
+
 // Middleware
+app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.get('/', (req, res) => {
-  res.json({ message: 'Hello from Express + TypeScript!' });
-});
+app.use("/", routes);
 
-// Error handling middleware (optional)
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+app.use('/api/admin', adminRouter);
+
+// Error handling middleware (must be last)
+app.use(errorMiddleware);
 
 export default app;
